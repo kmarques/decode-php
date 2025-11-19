@@ -129,5 +129,11 @@ completed contenus dans un tableau associatif uniquement si son statut vaut la v
             Aucune tâche correspondant aux critères
         <?php endif; ?>
     <?php endif; ?>
+    <pre>
+    <?php
+        print_r($_REQUEST);
+    print_r($_SERVER);
+    ?>
+    </pre>
 </body>
 </html>
