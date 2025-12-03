@@ -1,6 +1,7 @@
 <?php
 // Model
-$tasks = [["id" => "1", "author" => "dupond", "title" => "dormir", "completed" => true], ["id" => "2", "author" => "durand", "title" => "manger", "completed" => true], ["id" => "3", "author" => "durand", "title" => "manger", "completed" => false], ["id" => "4", "author" => "doe", "title" => "manger", "completed" => false]];
+require_once './models/tasks.php';
+$tasks = getTasks();
 $_GET["completed"] ??= "all";
 $_GET["author"] ??= "";
 
@@ -8,45 +9,6 @@ $_GET["author"] ??= "";
 // Controller
 $isCompleted = $_GET['completed'] === "all" ? null : filter_var($_GET['completed'], FILTER_VALIDATE_BOOL);
 $filterOwner = trim($_GET['author']);
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    switch ($_POST['action']) {
-        case 'Create':
-            $_POST['id'] = uniqid();
-            $tasks[] = $_POST;
-            //ou
-            // array_push($tasks, $_POST);
-            break;
-        case 'Delete':
-            // $tasks = array_filter($tasks, function ($task) {
-            //     return $task['id'] !== $_POST['id'];
-            // });
-            foreach ($tasks as $index => $task) {
-                if ($task['id'] === $_POST['id']) {
-                    $found = true;
-                    break;
-                }
-            }
-            if (($found ?? false) !== false) {
-                unset($tasks[$index]);
-            }
-            break;
-        case 'Edit':
-            // $tasks = array_map(function ($task) {
-            //     if ($task['id'] === $_POST['id']) {
-            //         return $_POST;
-            //     } else {
-            //         return $task;
-            //     }
-            // }, $tasks);
-            foreach ($tasks as $index => $task) {
-                if ($task['id'] === $_POST['id']) {
-                    $tasks[$index] = $_POST;
-                    break;
-                }
-            }
-    }
-}
 
 $tasksFiltered = array_filter($tasks, function ($task) use ($isCompleted, $filterOwner) {
     return
@@ -116,40 +78,13 @@ $tasksFiltered = array_filter($tasks, function ($task) use ($isCompleted, $filte
             <?php foreach ($tasksFiltered as $task) : ?>
                 <li style="text-decoration: <?= $task['completed'] ? 'line-through' : 'none' ?>">
                     <?= $task['id'] ?> - <?= $task['title'] ?> - <?= $task['completed'] ? 'completed' : 'not completed' ?> - <?= $task['author'] ?>
-                    <form method="POST">
-                        <input type="hidden" name="id" value="<?= $task['id'] ?>"/>
-                        <input name="action" type="submit" value="Delete"/>
-                    </form>
-                </li>
-                <li>
-                    <form method="POST">
-                        <input type="hidden" name="id" value="<?= $task['id'] ?>"/>
-                        <span>Titre</span><input name="title" value="<?= $task['title'] ?>"/>
-                        <span>Completed ?</span>
-                        <label>Not Completed <input name="completed" type="radio" value="false" <?=  $task['completed'] ? 'checked' : '' ?> /></label>
-                        <label>Completed <input name="completed" type="radio" value="true" <?=  $task['completed'] ? 'checked' : '' ?> /></label>
-                        <br/>
-                        <span>Author</span>
-                        <input name="author" type="text" value="<?= $task['author'] ?>"/>
-                        <br/>
-                        <input name="action" type="submit" value="Edit"/>
-                    </form>
+                    <a href="/delete-task.php?id=<?= $task['id'] ?>">Delete</a>
+                    <a href="/edit-task.php?id=<?= $task['id'] ?>">Edit</a>
                 </li>
             <?php endforeach; ?>
             </ul>
         <?php endif; ?>
     <?php endif; ?>
-    <h3>Add task</h3>
-        <form method="POST">
-            <span>Titre</span><input name="title"/>
-            <span>Completed ?</span>
-            <label>Not Completed <input name="completed" type="radio" value="false" /></label>
-            <label>Completed <input name="completed" type="radio" value="true" /></label>
-            <br/>
-            <span>Author</span>
-            <input name="author" type="text"/>
-            <br/>
-            <input name="action" type="submit" value="Create"/>
-        </form>
+    <a href="/create-task.php">Créer une tâche</a>
 </body>
 </html>
