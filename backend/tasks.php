@@ -1,10 +1,20 @@
 <?php
 // Model
-$tasks = [["author" => "dupond", "title" => "dormir", "completed" => true], ["author" => "durand", "title" => "manger", "completed" => true], ["author" => "durand", "title" => "manger", "completed" => false], ["author" => "doe", "title" => "manger", "completed" => false]];
+$tasks = [["id" => 1, "author" => "dupond", "title" => "dormir", "completed" => true], ["id" => 2, "author" => "durand", "title" => "manger", "completed" => true], ["id" => 3, "author" => "durand", "title" => "manger", "completed" => false], ["id" => 4, "author" => "doe", "title" => "manger", "completed" => false]];
+$_GET["completed"] ??= "all";
+$_GET["author"] ??= "";
+
 
 // Controller
 $isCompleted = $_GET['completed'] === "all" ? null : filter_var($_GET['completed'], FILTER_VALIDATE_BOOL);
 $filterOwner = trim($_GET['author']);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $_POST['id'] = uniqid();
+    $tasks[] = $_POST;
+    //ou
+    // array_push($tasks, $_POST);
+}
 
 $tasksFiltered = array_filter($tasks, function ($task) use ($isCompleted, $filterOwner) {
     return
@@ -72,34 +82,27 @@ $tasksFiltered = array_filter($tasks, function ($task) use ($isCompleted, $filte
         <?php else : ?>
             <ul>
             <?php foreach ($tasksFiltered as $task) : ?>
-                <li style="text-decoration: <?= $task['completed'] ? 'line-through' : 'none' ?>"><?= $task['title'] ?> - <?= $task['completed'] ? 'completed' : 'not completed' ?> - <?= $task['author'] ?></li>
+                <li style="text-decoration: <?= $task['completed'] ? 'line-through' : 'none' ?>"><?= $task['id'] ?> - <?= $task['title'] ?> - <?= $task['completed'] ? 'completed' : 'not completed' ?> - <?= $task['author'] ?></li>
             <?php endforeach; ?>
             </ul>
         <?php endif; ?>
     <?php endif; ?>
     <h3>Add task</h3>
         <form method="POST">
-            <input name="title"/>
+            <span>Titre</span><input name="title"/>
             <span>Completed ?</span>
-            <label>
-                All
-                <input
-                    name="completed"
-                    type="radio"
-                    value="all"
-                    <?= $_GET['completed'] === 'all' ? 'checked' : '' ?>
-                />
-            </label>
-            <label>Not Completed <input name="completed" type="radio" value="false" <?= $_GET['completed'] === 'false' ? 'checked' : '' ?>/></label>
-            <label>Completed <input name="completed" type="radio" value="true" <?= $_GET['completed'] === 'true' ? 'checked' : '' ?>/></label>
+            <label>Not Completed <input name="completed" type="radio" value="false" /></label>
+            <label>Completed <input name="completed" type="radio" value="true" /></label>
             <br/>
             <span>Author</span>
-            <input name="author" type="text" value="<?= $filterOwner ?>"/>
+            <input name="author" type="text"/>
             <br/>
-            <input type="submit" value="Search"/>
+            <input type="submit" value="Create"/>
         </form>
-        <span>Author: <?= $_POST['author'] ?>
-        <span>Title: <?= $_POST['title'] ?>
-        <span>Completed: <?= $_POST['completed'] ?>
+        <?php if ($_SERVER['REQUEST_METHOD'] === "POST") : ?>
+            <span>Author: <?= $_POST['author'] ?>
+            <span>Title: <?= $_POST['title'] ?>
+            <span>Completed: <?= $_POST['completed'] ?>
+        <?php endif; ?>
 </body>
 </html>
