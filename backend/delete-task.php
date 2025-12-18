@@ -14,7 +14,8 @@ $alert = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $deleted = deleteTask($_GET['id']);
     if ($deleted) {
-        $alert = "Tâche supprimée";
+        http_response_code(302);
+        header('Location: /tasks.php');
     } else {
         $alert = "Tâche non trouvée";
     }

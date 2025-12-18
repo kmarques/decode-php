@@ -12,7 +12,7 @@ if (!$task) {
 $alert = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $updatedTask = updateTask($_GET['id'], $_POST);
+    $updatedTask = updateTask(intval($_GET['id']), $_POST);
     if ($updatedTask !== null) {
         $alert = "Tâche mise à jour";
         $task = $updatedTask;
@@ -40,9 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label>Completed <input name="completed" type="radio" value="true" <?=  $task['completed'] ? 'checked' : '' ?> /></label>
         <br/>
         <span>Author</span>
-        <input name="author" type="text" value="<?= $task['author'] ?>"/>
+        <input name="authorid" type="text" value="<?= $task['authorid'] ?>"/>
         <br/>
-        <input name="action" type="submit" value="Edit"/>
+        <input type="submit" value="Edit"/>
     </form>
     <?php if ($alert): ?>
         <span style="color: green;"><?=  $alert ?></span>

@@ -1,9 +1,17 @@
 services:
   php:
-    image: php:8.3-apache
+    build:
+      context: .
+      dockerfile: Dockerfile
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
+    environment:
+      DSN: pgsql:host=database;port=5432;dbname=app;
+      DB_USER: root
+      DB_PASSWORD: password
+    depends_on:
+      - database
     ports:
       - 8080:80
 

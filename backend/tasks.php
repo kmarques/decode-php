@@ -1,7 +1,12 @@
 <?php
 // Model
 require_once './models/tasks.php';
-$tasks = getTasks();
+if (($_GET['completed'] ?? '') === "all") {
+    unset($_GET['completed']);
+}
+$tasks = getTasks(array_filter($_GET, function ($value) {
+    return $value !== '';
+}));
 $_GET["completed"] ??= "all";
 $_GET["author"] ??= "";
 
@@ -66,7 +71,8 @@ $tasksFiltered = array_filter($tasks, function ($task) use ($isCompleted, $filte
             <label>Completed <input name="completed" type="radio" value="true" <?= $_GET['completed'] === 'true' ? 'checked' : '' ?>/></label>
             <br/>
             <span>Author</span>
-            <input name="author" type="text" value="<?= $filterOwner ?>"/>
+            <input name="authorid" type="text" value="<?= $filterOwner ?>"/>
+            <input name="title" type="text" value="" placeholder="title"/>
             <br/>
             <input type="submit" value="Search"/>
         </form>
