@@ -22,35 +22,47 @@ function getTasks($filters = [])
     sanitizeData($filters);
     $newData = array_map(function ($value, $key) {
         $value = match (gettype($value)) {
-            'string' => "'{$value}'",
             'bool' => $value ? 'true' : 'false',
             'boolean' => filter_var($value, FILTER_VALIDATE_BOOL) ? 'true' : 'false',
             default => $value
         };
-        return "{$key}={$value}";
+        return "{$key} = :{$key}";
     }, $filters, array_keys($filters));
     $newData = implode(" AND ", $newData);
+    //[
+    //    "toto" => "titi",
+    //    "tata" => "tutu"
+    //] <=>
+    //[
+    //    "toto = :toto",
+    //    "tata = :tata"
+    //] <=>
+    //  "toto = :toto AND tata = :tata"
 
     $where = strlen($newData) > 0 ? " WHERE {$newData}" : "";
     $sql = "SELECT tasks.*, user_account.username author FROM tasks INNER JOIN user_account on authorid = user_account.id {$where}";
-    var_dump($sql);
-    $stmt = $db->query($sql);
+    // SELECT tasks.*, user_account.username author FROM tasks INNER JOIN user_account on authorid = user_account.id WHERE toto = :toto AND tata = :tata
+    $stmt = $db->prepare($sql);
+    $stmt->execute($filters);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function getTask($id)
 {
     global $db;
-    $sql = "SELECT tasks.*, user_account.username author FROM tasks INNER JOIN user_account on authorid = user_account.id WHERE tasks.id = {$id}";
-    $stmt = $db->query($sql);
+    $sql = "SELECT tasks.*, user_account.username author FROM tasks INNER JOIN user_account on authorid = user_account.id WHERE tasks.id = ?";
+    $stmt = $db->prepare($sql);
+    $stmt->execute([$id]);
     return $stmt->fetch();
 }
 
 function deleteTask($id)
 {
     global $db;
-    $sql = "DELETE FROM tasks WHERE id = {$id}";
-    $stmt = $db->query($sql);
+    $sql = "DELETE FROM tasks WHERE id = :id";
+    $stmt = $db->prepare($sql);
+    $stmt->bindParam('id', $id);
+    $stmt->execute();
     return $stmt->fetch() !== false;
 }
 
@@ -60,37 +72,45 @@ function updateTask($id, $data)
     // marque=val1, model=val2, engine=val3
     $newData = array_map(function ($value, $key) {
         $value = match (gettype($value)) {
-            'string' => "'{$value}'",
             'bool' => $value ? 'true' : 'false',
             'boolean' => $value ? 'true' : 'false',
             default => $value
         };
-        return "{$key}={$value}";
+        return "{$key}=:{$key}";
     }, $data, array_keys($data));
     $newData = implode(", ", $newData);
 
-    $sql = "UPDATE tasks SET {$newData} WHERE id = {$id}";
+    $sql = "UPDATE tasks SET {$newData} WHERE id = :id";
+    // UPDATE tasks SET marque=:marque, model=:model, engine=:engine WHERE id = :id
     $stmt = $db->prepare($sql);
-    $stmt->execute();
+
+    $stmt->bindParam('id', $id);
+    $stmt->execute($data);
     return $stmt->fetch() !== false ? getTask($id) : false;
 }
 
+// ["toto" => "titi", "tata" => "tutu"]
 function createTask($data)
 {
     global $db;
     sanitizeData($data);
     $keys = implode(', ', array_keys($data));
-    $values = implode(', ', array_map(function ($value) {
-        return match (gettype($value)) {
-            'string' => "'{$value}'",
+    $newData = array_map(function ($value, $key) {
+        $value = match (gettype($value)) {
             'bool' => $value ? 'true' : 'false',
             'boolean' => $value ? 'true' : 'false',
             default => $value
         };
-    }, $data));
-    $sql = "INSERT INTO tasks ({$keys}) VALUES ({$values})";
+        return ":{$key}";
+    }, $data, array_keys($data));
+    $implodedValues = implode(', ', $newData);
+    // ":toto, :tata"
+
+
+    $sql = "INSERT INTO tasks ({$keys}) VALUES ({$implodedValues})";
+    // INSERT INTO tasks (toto, tata) VALUES (:toto, :tata)
     $stmt = $db->prepare($sql);
-    $stmt->execute();
+    $stmt->execute($data);
     if ($stmt->fetch() === false) {
         throw new \RuntimeException('Failed to insert');
     }
