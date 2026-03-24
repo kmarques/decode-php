@@ -57,8 +57,18 @@ var_dump($path);
 $realPath = strtok($path, '?');
 var_dump($realPath);
 
-switch ($realPath) {
-    case '/tasks':
+switch (true) {
+    case preg_match("#/tasks/(?<id>\d+)#", $realPath, $matches):
+        $matches['id'] = intval($matches['id']);
+        getTaskController($matches['id']);
+        break;
+    case preg_match("#/tasks/(?<id>\d+)/comments/(?<comment_id>\d+)#", $realPath, $matches):
+        $matches['id'] = intval($matches['id']);
+        $matches['comment_id'] = intval($matches['comment_id']);
+        deleteCommentController($matches['id'], $matches['comment_id']);
+        break;
+    case $realPath === '/tasks':
         getTasksController();
         break;
+    case 
 }
